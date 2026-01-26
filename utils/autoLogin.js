@@ -1,9 +1,8 @@
-import puppeteer from 'puppeteer-core'
+import puppeteer from 'puppeteer'
 import logger from './logger.js'
 
 export default async (userConfig) => {
   const browser = await puppeteer.launch({
-    executablePath: userConfig.chromePath,
     headless: true
   })
   const page = await browser.newPage()

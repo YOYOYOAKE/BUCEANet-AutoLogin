@@ -18,6 +18,7 @@ async function checkNet() {
 }
 
 await autoLogin(userConfig)
+logger.info('登录完成')
 
 setInterval(checkNet, 60000)
 
