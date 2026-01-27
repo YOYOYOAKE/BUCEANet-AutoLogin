@@ -2,6 +2,12 @@ import autoLogin from './utils/autoLogin.js'
 import userConfig from './config.js'
 import logger from './utils/logger.js';
 
+if (userConfig.username === 'username' || userConfig.password === 'password') {
+  logger.error('请先在 config.js 中配置用户名和密码！')
+  console.error('错误：请先在 config.js 中配置用户名和密码！')
+  process.exit(1)
+}
+
 async function checkNet() {
   try {
     await fetch('https://www.cnki.net/', {
