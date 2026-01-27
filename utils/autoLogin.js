@@ -1,9 +1,17 @@
 import puppeteer from 'puppeteer'
 import logger from './logger.js'
+import { fileURLToPath } from 'url'
+import { dirname, join } from 'path'
+
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = dirname(__filename)
+const projectRoot = join(__dirname, '..')
 
 export default async (userConfig) => {
   const browser = await puppeteer.launch({
-    headless: true
+    headless: true,
+    // 指定浏览器路径，确保系统服务也能找到
+    executablePath: puppeteer.executablePath()
   })
   const page = await browser.newPage()
 

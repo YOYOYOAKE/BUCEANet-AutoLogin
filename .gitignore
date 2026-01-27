@@ -1,3 +1,4 @@
 node_modules
 logs
 daemon
+.puppeteer_cache
