@@ -2,78 +2,76 @@
 
 BUCEA 的校园网每天凌晨三点准时踢所有账号下线，写了个项目保证网络连接。
 
-此项目使用浏览器模拟点击的方式实现自动登录，并提供注册为 Windows 服务的方式保证后台运行。
+此项目使用浏览器模拟点击的方式实现自动登录，并支持安装当前用户登录自启动任务来保持后台运行。
 
-## 0x01 环境
+## 安装
 
-项目使用 Puppeteer 自带的 Chromium 浏览器，无需额外安装浏览器。
-
-项目依赖 Node.js >= 20 环境，请确保安装了指定版本的 Node.js。
-
-项目使用 PNPM 作为包管理器，请确保安装了 PNPM。
+安装命令行工具：
 
 ```powershell
-npm install -g pnpm
+uv tool install git+https://github.com/YOYOYOAKE/BUCEANet-AutoLogin
 ```
 
-## 0x02 部署
+第一次运行会自动下载 Playwright Chromium 到 `%LOCALAPPDATA%\BUCEANet-AutoLogin\browsers`。
 
-### 2.1 下载项目
+## 前台运行
 
-下载项目源代码或克隆仓库。
+执行一次登录：
 
 ```powershell
-git clone https://github.com/YOYOYOAKE/BUCEANet-AutoLogin.git
-cd BUCEANet-AutoLogin
+buceanet-autologin run -i <学号> -p <密码>
 ```
 
-### 2.2 安装依赖
-
-项目已配置 `.npmrc` 文件使用国内淘宝镜像源，直接安装即可：
+持续运行并定时检测网络：
 
 ```powershell
-pnpm install
+buceanet-autologin run forever -i <学号> -p <密码>
 ```
 
-### 2.3 下载 Chromium 浏览器
+`run forever` 会先登录一次，然后常驻前台轮询。
 
-Puppeteer 需要下载 Chrome 浏览器。项目已配置浏览器安装到项目目录（`.puppeteer_cache`），确保系统服务也能访问。
+## 自启动
+
+安装当前用户登录自启动任务，并立即在后台启动：
 
 ```powershell
-pnpm exec puppeteer browsers install chrome
+buceanet-autologin install-startup -i <学号> -p <密码>
 ```
 
-### 2.4 配置账号信息
-
-在 `config.js` 中配置你的校园网用户名和密码：
-
-```js
-export default {
-  username: '你的学号',
-  password: '你的密码'
-}
-```
-
-### 2.5 运行项目
+删除当前用户登录自启动任务：
 
 ```powershell
-pnpm start
+buceanet-autologin uninstall-startup
 ```
 
-程序会自动登录校园网，并每分钟检查一次网络连接状态，断线时自动重新登录。
+任务名称为 `BUCEANet-AutoLogin`。账号参数会写入当前用户计划任务的启动命令；日志写入 `%LOCALAPPDATA%\BUCEANet-AutoLogin\logs\app.log`。
 
-## 0x03 安装与卸载服务
+## 开发
 
-为保证项目随系统自启动，项目提供了安装为系统服务的功能。
-
-安装为系统服务：
+克隆仓库后先同步依赖：
 
 ```powershell
-pnpm install-service
+uv sync
 ```
 
-卸载系统服务：
+从源码运行命令行入口：
 
 ```powershell
-pnpm uninstall-service
+uv run buceanet-autologin --help
+uv run buceanet-autologin run -i <学号> -p <密码>
+uv run buceanet-autologin run forever -i <学号> -p <密码>
+```
+
+类型检查与构建：
+
+```powershell
+uv run pyright
+uv build
+```
+
+运行时文件默认写入 `%LOCALAPPDATA%\BUCEANet-AutoLogin`，包括日志和 Playwright 浏览器。调试自启动时可以用 Windows 任务计划程序查看 `BUCEANet-AutoLogin`，或直接运行：
+
+```powershell
+uv run buceanet-autologin install-startup -i <学号> -p <密码>
+uv run buceanet-autologin uninstall-startup
 ```

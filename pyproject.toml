@@ -1,0 +1,33 @@
+[project]
+name = "buceanet-autologin"
+version = "1.0.0"
+description = "BUCEA campus network auto-login"
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "MIT" }
+authors = [{ name = "YOAKE" }]
+keywords = ["bucea", "auto-login", "campus-network", "playwright"]
+dependencies = [
+    "playwright>=1.44.0",
+]
+
+[project.urls]
+Repository = "https://github.com/YOYOYOAKE/BUCEANet-AutoLogin"
+
+[project.scripts]
+buceanet-autologin = "buceanet_autologin.app:main"
+
+[dependency-groups]
+dev = ["pyright>=1.1.380"]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/buceanet_autologin"]
+
+[tool.pyright]
+include = ["src"]
+typeCheckingMode = "strict"
+pythonVersion = "3.11"
+
+[build-system]
+requires = ["hatchling>=1.24.0"]
+build-backend = "hatchling.build"
