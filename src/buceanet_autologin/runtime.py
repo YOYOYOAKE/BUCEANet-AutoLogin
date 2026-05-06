@@ -11,6 +11,7 @@ from pathlib import Path
 APP_DIR_NAME = "BUCEANet-AutoLogin"
 LOGGER_NAME = "buceanet_autologin"
 PLAYWRIGHT_BROWSERS_PATH = "PLAYWRIGHT_BROWSERS_PATH"
+RUNTIME_DIR_ENV = "BUCEANET_RUNTIME_DIR"
 
 _install_lock = threading.Lock()
 _browsers_ready = False
@@ -21,6 +22,10 @@ class BrowserInstallError(RuntimeError):
 
 
 def runtime_dir() -> Path:
+    override = os.environ.get(RUNTIME_DIR_ENV)
+    if override:
+        return Path(override)
+
     local_app_data = os.environ.get("LOCALAPPDATA")
     if local_app_data:
         return Path(local_app_data) / APP_DIR_NAME

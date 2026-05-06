@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+import sys
 import threading
 from collections.abc import Sequence
 from dataclasses import dataclass
@@ -9,7 +10,7 @@ from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
 
 from .runtime import BrowserInstallError, configure_logging, get_logger
-from .startup import StartupError, install_startup, uninstall_startup
+from .service import ServiceError, install_service, uninstall_service
 
 NETWORK_CHECK_URL = "https://www.cnki.net/"
 NETWORK_TIMEOUT_SECONDS = 5.0
@@ -27,9 +28,17 @@ class Credentials:
 
 
 def main(argv: Sequence[str] | None = None) -> int:
+    arguments = list(sys.argv[1:] if argv is None else argv)
+    if arguments == ["service-run"]:
+        from .service import run_service
+
+        run_service()
+        return 0
+
     parser = _build_parser()
-    args = parser.parse_args(argv)
+    args = parser.parse_args(arguments)
     command = cast(str, args.command)
+
     logger = configure_logging()
 
     try:
@@ -47,15 +56,15 @@ def main(argv: Sequence[str] | None = None) -> int:
                 run_once(credentials)
             return 0
 
-        if command == "install-startup":
-            install_startup(_credentials_from_args(args))
+        if command == "install-service":
+            install_service(_credentials_from_args(args))
             return 0
 
-        if command == "uninstall-startup":
-            uninstall_startup()
+        if command == "uninstall-service":
+            uninstall_service()
             return 0
 
-    except (BrowserInstallError, ConfigError, StartupError) as exc:
+    except (BrowserInstallError, ConfigError, ServiceError) as exc:
         logger.error("%s", exc)
         return 2
 
@@ -134,15 +143,15 @@ def _build_parser() -> argparse.ArgumentParser:
     )
     _add_credentials_options(run_parser)
 
-    install_startup_parser = subparsers.add_parser(
-        "install-startup",
-        help="安装当前用户登录自启动任务",
+    install_service_parser = subparsers.add_parser(
+        "install-service",
+        help="安装并启动 Windows 服务",
     )
-    _add_credentials_options(install_startup_parser)
+    _add_credentials_options(install_service_parser)
 
     subparsers.add_parser(
-        "uninstall-startup",
-        help="删除当前用户登录自启动任务",
+        "uninstall-service",
+        help="停止并卸载 Windows 服务",
     )
 
     return parser

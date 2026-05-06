@@ -2,7 +2,7 @@
 
 BUCEA 的校园网每天凌晨三点准时踢所有账号下线，写了个项目保证网络连接。
 
-此项目使用浏览器模拟点击的方式实现自动登录，并支持安装当前用户登录自启动任务来保持后台运行。
+此项目使用浏览器模拟点击的方式实现自动登录，并支持安装为 Windows 服务来保持后台运行。
 
 ## 安装
 
@@ -30,21 +30,23 @@ buceanet-autologin run forever -i <学号> -p <密码>
 
 `run forever` 会先登录一次，然后常驻前台轮询。
 
-## 自启动
+## Windows 服务
 
-安装当前用户登录自启动任务，并立即在后台启动：
+安装、卸载服务需要管理员权限。
 
-```powershell
-buceanet-autologin install-startup -i <学号> -p <密码>
-```
-
-删除当前用户登录自启动任务：
+安装并启动服务：
 
 ```powershell
-buceanet-autologin uninstall-startup
+buceanet-autologin install-service -i <学号> -p <密码>
 ```
 
-任务名称为 `BUCEANet-AutoLogin`。账号参数会写入当前用户计划任务的启动命令；日志写入 `%LOCALAPPDATA%\BUCEANet-AutoLogin\logs\app.log`。
+停止并卸载服务：
+
+```powershell
+buceanet-autologin uninstall-service
+```
+
+服务名称为 `BUCEANet-AutoLogin`。账号参数会写入 Windows 服务参数；服务日志写入 `%PROGRAMDATA%\BUCEANet-AutoLogin\logs\app.log`。
 
 ## 开发
 
@@ -69,9 +71,9 @@ uv run pyright
 uv build
 ```
 
-运行时文件默认写入 `%LOCALAPPDATA%\BUCEANet-AutoLogin`，包括日志和 Playwright 浏览器。调试自启动时可以用 Windows 任务计划程序查看 `BUCEANet-AutoLogin`，或直接运行：
+前台运行时文件默认写入 `%LOCALAPPDATA%\BUCEANet-AutoLogin`，服务运行时文件写入 `%PROGRAMDATA%\BUCEANet-AutoLogin`。调试服务时可以直接运行：
 
 ```powershell
-uv run buceanet-autologin install-startup -i <学号> -p <密码>
-uv run buceanet-autologin uninstall-startup
+uv run buceanet-autologin install-service -i <学号> -p <密码>
+uv run buceanet-autologin uninstall-service
 ```

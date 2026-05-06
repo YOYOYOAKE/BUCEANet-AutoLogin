@@ -9,6 +9,7 @@ authors = [{ name = "YOAKE" }]
 keywords = ["bucea", "auto-login", "campus-network", "playwright"]
 dependencies = [
     "playwright>=1.44.0",
+    "pywin32>=306; platform_system == 'Windows'",
 ]
 
 [project.urls]
@@ -25,6 +26,7 @@ packages = ["src/buceanet_autologin"]
 
 [tool.pyright]
 include = ["src"]
+stubPath = "typings"
 typeCheckingMode = "strict"
 pythonVersion = "3.11"
 
