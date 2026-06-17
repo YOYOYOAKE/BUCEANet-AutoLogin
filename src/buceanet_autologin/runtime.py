@@ -43,9 +43,6 @@ def install_browsers() -> bool:
         [sys.executable, "-m", "playwright", "install", "chromium"],
         check=False,
         env={**os.environ, _PLAYWRIGHT_BROWSERS_PATH: str(browsers_path)},
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-        text=True,
     )
 
     return completed.returncode == 0
