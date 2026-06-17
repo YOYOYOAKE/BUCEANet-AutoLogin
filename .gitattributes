@@ -1,0 +1,30 @@
+# 所有文本文件统一使用 LF 行尾
+*          text=auto eol=lf
+
+# Python
+*.py       text eol=lf
+*.pyi      text eol=lf
+*.pyx      text eol=lf
+*.pxd      text eol=lf
+
+# 配置文件
+*.toml     text eol=lf
+*.yaml     text eol=lf
+*.yml      text eol=lf
+*.cfg      text eol=lf
+*.ini      text eol=lf
+*.lock     text eol=lf
+
+# 文档
+*.md       text eol=lf
+*.rst      text eol=lf
+*.txt      text eol=lf
+
+# Shell / 脚本
+*.sh       text eol=lf
+*.ps1      text eol=lf
+*.bat      text eol=lf
+
+# Git 自身
+.gitattributes text eol=lf
+.gitignore     text eol=lf
