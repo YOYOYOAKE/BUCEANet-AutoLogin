@@ -1,13 +1,12 @@
 from __future__ import annotations
 
 import ctypes
-import os
+import logging
 import platform
 import subprocess
 import sys
 import threading
 from collections.abc import Sequence
-from pathlib import Path
 from typing import TYPE_CHECKING, Protocol, cast
 
 import pywintypes
@@ -15,7 +14,10 @@ import servicemanager
 import win32service
 import win32serviceutil
 
-from .runtime import configure_logging, get_logger
+def _get_logger() -> logging.Logger:
+    from .app import get_logger as _get
+
+    return _get()
 
 if TYPE_CHECKING:
     from .app import Credentials
@@ -58,9 +60,10 @@ class BUCEANetAutoLoginService(win32serviceutil.ServiceFramework):
         self._stop_event.set()
 
     def SvcDoRun(self) -> None:
-        _configure_service_runtime_dir()
+        from .app import configure_logging
+
         configure_logging()
-        logger = get_logger()
+        logger = _get_logger()
         self.ReportServiceStatus(win32service.SERVICE_RUNNING)
 
         servicemanager.LogMsg(
@@ -85,7 +88,7 @@ def install_service(credentials: Credentials) -> None:
     _ensure_windows()
     _ensure_admin()
 
-    logger = get_logger()
+    logger = _get_logger()
 
     service_exists = False
 
@@ -128,7 +131,7 @@ def uninstall_service() -> None:
 
     _stop_service()
 
-    logger = get_logger()
+    logger = _get_logger()
     try:
         win32serviceutil.RemoveService(SERVICE_NAME)
         logger.info("服务卸载成功")
@@ -193,7 +196,7 @@ def _load_service_credentials() -> Credentials:
 
 
 def _start_service() -> None:
-    logger = get_logger()
+    logger = _get_logger()
     try:
         win32serviceutil.StartService(SERVICE_NAME)
         logger.info("服务启动成功")
@@ -204,7 +207,7 @@ def _start_service() -> None:
 
 
 def _stop_service() -> None:
-    logger = get_logger()
+    logger = _get_logger()
     try:
         win32serviceutil.StopService(SERVICE_NAME)
         logger.info("服务已停止")
@@ -215,13 +218,6 @@ def _stop_service() -> None:
         }:
             raise
 
-
-def _configure_service_runtime_dir() -> None:
-    program_data = os.environ.get("PROGRAMDATA", r"C:\ProgramData")
-    os.environ.setdefault(
-        "BUCEANET_RUNTIME_DIR",
-        str(Path(program_data) / SERVICE_NAME),
-    )
 
 
 def _winerror(exc: pywintypes.error) -> int:

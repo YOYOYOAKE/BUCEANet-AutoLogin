@@ -18,7 +18,7 @@ uv tool install git+https://github.com/YOYOYOAKE/BUCEANet-AutoLogin
 buceanet-autologin install-chrome
 ```
 
-浏览器会下载到 `%LOCALAPPDATA%\BUCEANet-AutoLogin\browsers`。
+浏览器和日志统一存储在 `%PROGRAMDATA%\BUCEANet-AutoLogin`。
 
 ## 前台运行
 
@@ -52,7 +52,7 @@ buceanet-autologin install-service -i <学号> -p <密码>
 buceanet-autologin uninstall-service
 ```
 
-服务名称为 `BUCEANet-AutoLogin`。账号参数会写入 Windows 服务参数；服务日志写入 `%PROGRAMDATA%\BUCEANet-AutoLogin\logs\app.log`。
+服务名称为 `BUCEANet-AutoLogin`。账号参数会写入 Windows 服务参数。
 
 ## 开发
 
@@ -78,7 +78,7 @@ uv run pyright
 uv build
 ```
 
-前台运行时文件默认写入 `%LOCALAPPDATA%\BUCEANet-AutoLogin`，服务运行时文件写入 `%PROGRAMDATA%\BUCEANet-AutoLogin`。调试服务时可以直接运行：
+所有文件统一存储在 `%PROGRAMDATA%\BUCEANet-AutoLogin`。调试服务时可以直接运行：
 
 ```powershell
 uv run buceanet-autologin install-service -i <学号> -p <密码>

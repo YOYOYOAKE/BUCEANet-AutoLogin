@@ -1,26 +1,67 @@
 from __future__ import annotations
 
 import argparse
+import logging
 import sys
 import threading
 from collections.abc import Sequence
 from dataclasses import dataclass
+from logging.handlers import RotatingFileHandler
+from pathlib import Path
 from typing import cast
-from urllib.error import HTTPError, URLError
-from urllib.request import Request, urlopen
 
 from playwright.sync_api import Error as PlaywrightError
 
 from .runtime import (
     BrowserInstallError,
-    configure_logging,
-    ensure_browsers_installed,
-    get_logger,
+    check_browsers_installed,
+    install_browsers,
+    runtime_dir,
 )
 from .service import ServiceError, install_service, uninstall_service
 
-NETWORK_CHECK_URL = "https://www.cnki.net/"
-NETWORK_TIMEOUT_SECONDS = 5.0
+LOGGER_NAME = "buceanet_autologin"
+
+
+def logs_dir() -> Path:
+    return runtime_dir() / "logs"
+
+
+def configure_logging() -> logging.Logger:
+    logs_dir().mkdir(parents=True, exist_ok=True)
+
+    logger = logging.getLogger(LOGGER_NAME)
+    logger.setLevel(logging.INFO)
+    logger.propagate = False
+
+    if logger.handlers:
+        return logger
+
+    formatter = logging.Formatter(
+        fmt="%(asctime)s %(levelname)s: %(message)s",
+        datefmt="%Y-%m-%d %H:%M:%S",
+    )
+
+    console_handler = logging.StreamHandler()
+    console_handler.setFormatter(formatter)
+    logger.addHandler(console_handler)
+
+    file_handler = RotatingFileHandler(
+        logs_dir() / "app.log",
+        maxBytes=1_000_000,
+        backupCount=3,
+        encoding="utf-8",
+    )
+    file_handler.setFormatter(formatter)
+    logger.addHandler(file_handler)
+
+    return logger
+
+
+def get_logger() -> logging.Logger:
+    return logging.getLogger(LOGGER_NAME)
+
+
 POLL_INTERVAL_SECONDS = 60.0
 
 
@@ -72,8 +113,11 @@ def main(argv: Sequence[str] | None = None) -> int:
             return 0
 
         if command == "install-chrome":
-            ensure_browsers_installed()
-            logger.info("Playwright Chromium 安装完成")
+            if install_browsers():
+                logger.info("Playwright Chromium 安装完成")
+            else:
+                logger.error("Playwright Chromium 安装失败，请检查网络连接后重新运行")
+                return 2
             return 0
 
     except (BrowserInstallError, ConfigError, PlaywrightError, ServiceError) as exc:
@@ -104,7 +148,11 @@ def create_credentials(student_id: str | None, password: str | None) -> Credenti
 def run_once(credentials: Credentials) -> None:
     from .portal import auto_login
 
-    ensure_browsers_installed()
+    if not check_browsers_installed():
+        raise BrowserInstallError(
+            "Playwright Chromium 未安装，请先运行 buceanet-autologin install-chrome"
+        )
+    get_logger().info("Playwright Chromium 已就绪")
     auto_login(credentials)
 
 
@@ -122,28 +170,9 @@ def run_forever(
 
     while not stop_signal.wait(POLL_INTERVAL_SECONDS):
         try:
-            check_network_and_login(credentials)
+            run_once(credentials)
         except PlaywrightError:
             logger.exception("登录失败")
-
-
-def check_network_and_login(credentials: Credentials) -> None:
-    from .portal import auto_login
-
-    logger = get_logger()
-    request = Request(
-        NETWORK_CHECK_URL,
-        headers={"User-Agent": "buceanet-autologin/1.0"},
-    )
-
-    try:
-        with urlopen(request, timeout=NETWORK_TIMEOUT_SECONDS) as response:
-            response.read(1)
-    except HTTPError as exc:
-        logger.debug("网络检查返回 HTTP %s，", exc.code)
-    except (OSError, TimeoutError, URLError):
-        logger.info("网络连接失败，重新登录")
-        auto_login(credentials)
 
 
 def _build_parser() -> argparse.ArgumentParser:
