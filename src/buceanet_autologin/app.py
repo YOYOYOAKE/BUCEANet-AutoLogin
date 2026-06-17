@@ -9,7 +9,14 @@ from typing import cast
 from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
 
-from .runtime import BrowserInstallError, configure_logging, get_logger
+from playwright.sync_api import Error as PlaywrightError
+
+from .runtime import (
+    BrowserInstallError,
+    configure_logging,
+    ensure_browsers_installed,
+    get_logger,
+)
 from .service import ServiceError, install_service, uninstall_service
 
 NETWORK_CHECK_URL = "https://www.cnki.net/"
@@ -64,7 +71,12 @@ def main(argv: Sequence[str] | None = None) -> int:
             uninstall_service()
             return 0
 
-    except (BrowserInstallError, ConfigError, ServiceError) as exc:
+        if command == "install-chrome":
+            ensure_browsers_installed()
+            logger.info("Playwright Chromium 安装完成")
+            return 0
+
+    except (BrowserInstallError, ConfigError, PlaywrightError, ServiceError) as exc:
         logger.error("%s", exc)
         return 2
 
@@ -92,20 +104,27 @@ def create_credentials(student_id: str | None, password: str | None) -> Credenti
 def run_once(credentials: Credentials) -> None:
     from .portal import auto_login
 
+    ensure_browsers_installed()
     auto_login(credentials)
-    get_logger().info("登录完成")
 
 
 def run_forever(
     credentials: Credentials,
     stop_event: threading.Event | None = None,
 ) -> None:
+    logger = get_logger()
     stop_signal = threading.Event() if stop_event is None else stop_event
 
-    run_once(credentials)
+    try:
+        run_once(credentials)
+    except PlaywrightError:
+        logger.exception("登录失败")
 
     while not stop_signal.wait(POLL_INTERVAL_SECONDS):
-        check_network_and_login(credentials)
+        try:
+            check_network_and_login(credentials)
+        except PlaywrightError:
+            logger.exception("登录失败")
 
 
 def check_network_and_login(credentials: Credentials) -> None:
@@ -152,6 +171,11 @@ def _build_parser() -> argparse.ArgumentParser:
     subparsers.add_parser(
         "uninstall-service",
         help="停止并卸载 Windows 服务",
+    )
+
+    subparsers.add_parser(
+        "install-chrome",
+        help="手动安装 Playwright Chromium 浏览器",
     )
 
     return parser

@@ -7,7 +7,6 @@ from playwright.sync_api import Browser, Page, TimeoutError, sync_playwright
 
 from .runtime import (
     configure_playwright_browsers_path,
-    ensure_browsers_installed,
     get_logger,
 )
 
@@ -24,7 +23,6 @@ LOGOUT_TIMEOUT_MS = 3_000
 def auto_login(credentials: Credentials) -> None:
     logger = get_logger()
     configure_playwright_browsers_path()
-    ensure_browsers_installed()
 
     with sync_playwright() as playwright:
         browser: Browser | None = None
@@ -49,9 +47,6 @@ def auto_login(credentials: Credentials) -> None:
             page.click("#login-account")
             page.wait_for_timeout(LOGIN_SETTLE_MS)
             logger.info("登录完成")
-        except PlaywrightError:
-            current_url = "尚未打开页面" if page is None else page.url
-            logger.exception("登录失败，当前页面: %s", current_url)
         finally:
             if browser is not None:
                 browser.close()
